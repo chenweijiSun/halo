@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import run.halo.app.event.comment.CommentNewEvent;
 import run.halo.app.event.comment.CommentReplyEvent;
 import run.halo.app.exception.ServiceException;
+import run.halo.app.model.dto.post.BasePostMinimalDTO;
+import run.halo.app.mail.MailService;
 import run.halo.app.model.entity.*;
 import run.halo.app.model.properties.CommentProperties;
 import run.halo.app.service.*;
@@ -86,12 +88,9 @@ public class CommentEventListener {
 
             log.debug("Got post comment: [{}]", postComment);
 
-            Post post = postService.getById(postComment.getPostId());
+            BasePostMinimalDTO post = postService.convertToMinimal(postService.getById(postComment.getPostId()));
 
-            StrBuilder url = new StrBuilder(optionService.getBlogBaseUrl())
-                    .append("/archives/")
-                    .append(post.getUrl());
-            data.put("url", url.toString());
+            data.put("url", post.getFullPath());
             data.put("page", post.getTitle());
             data.put("author", postComment.getAuthor());
             data.put("content", postComment.getContent());
@@ -105,12 +104,9 @@ public class CommentEventListener {
 
             log.debug("Got sheet comment: [{}]", sheetComment);
 
-            Sheet sheet = sheetService.getById(sheetComment.getPostId());
+            BasePostMinimalDTO sheet = sheetService.convertToMinimal(sheetService.getById(sheetComment.getPostId()));
 
-            StrBuilder url = new StrBuilder(optionService.getBlogBaseUrl())
-                    .append("/s/")
-                    .append(sheet.getUrl());
-            data.put("url", url.toString());
+            data.put("url", sheet.getFullPath());
             data.put("page", sheet.getTitle());
             data.put("author", sheetComment.getAuthor());
             data.put("content", sheetComment.getContent());
@@ -126,7 +122,8 @@ public class CommentEventListener {
             Journal journal = journalService.getById(journalComment.getPostId());
 
             StrBuilder url = new StrBuilder(optionService.getBlogBaseUrl())
-                    .append("/journals");
+                    .append("/")
+                    .append(optionService.getJournalsPrefix());
             data.put("url", url.toString());
             data.put("page", journal.getCreateTime());
             data.put("author", journalComment.getAuthor());
@@ -141,7 +138,7 @@ public class CommentEventListener {
     /**
      * Received a new reply comment event.
      *
-     * @param newEvent reply comment event.
+     * @param replyEvent reply comment event.
      */
     @Async
     @EventListener
@@ -179,13 +176,9 @@ public class CommentEventListener {
 
             baseAuthorEmail = baseComment.getEmail();
 
-            Post post = postService.getById(postComment.getPostId());
+            BasePostMinimalDTO post = postService.convertToMinimal(postService.getById(postComment.getPostId()));
 
-            StrBuilder url = new StrBuilder(optionService.getBlogBaseUrl())
-                    .append("/archives/")
-                    .append(post.getUrl());
-
-            data.put("url", url);
+            data.put("url", post.getFullPath());
             data.put("page", post.getTitle());
             data.put("baseAuthor", baseComment.getAuthor());
             data.put("baseContent", baseComment.getContent());
@@ -213,13 +206,9 @@ public class CommentEventListener {
 
             baseAuthorEmail = baseComment.getEmail();
 
-            Sheet sheet = sheetService.getById(sheetComment.getPostId());
+            BasePostMinimalDTO sheet = sheetService.convertToMinimal(sheetService.getById(sheetComment.getPostId()));
 
-            StrBuilder url = new StrBuilder(optionService.getBlogBaseUrl())
-                    .append("/s/")
-                    .append(sheet.getUrl());
-
-            data.put("url", url);
+            data.put("url", sheet.getFullPath());
             data.put("page", sheet.getTitle());
             data.put("baseAuthor", baseComment.getAuthor());
             data.put("baseContent", baseComment.getContent());
@@ -249,7 +238,8 @@ public class CommentEventListener {
             Journal journal = journalService.getById(journalComment.getPostId());
 
             StrBuilder url = new StrBuilder(optionService.getBlogBaseUrl())
-                    .append("/journals");
+                    .append("/")
+                    .append(optionService.getJournalsPrefix());
             data.put("url", url);
             data.put("page", journal.getContent());
             data.put("baseAuthor", baseComment.getAuthor());
